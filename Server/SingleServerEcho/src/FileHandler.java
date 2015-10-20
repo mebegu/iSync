@@ -1,5 +1,6 @@
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,6 +31,7 @@ public class FileHandler {
 	private String[] getAllFileNames(){
 		File folder = new File(dir);
 		File[] listOfFiles = folder.listFiles();
+
 		int len = listOfFiles.length;
 		
 		String[] names = new String[len];
@@ -79,6 +81,8 @@ public class FileHandler {
 		
 		return complete.digest(file);
 	}
+	
+
 	
 	
 }

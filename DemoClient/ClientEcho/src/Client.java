@@ -1,6 +1,8 @@
 // A simple Client Server Protocol .. Client for Echo Server
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
@@ -32,7 +34,7 @@ public class Client implements Runnable
 		{
 			s =new Socket(address, 4445); // You can use static final constant PORT_NUM
 			br= new BufferedReader(new InputStreamReader(System.in));
-			input = new ObjectInputStream(s.getInputStream());
+			input = new ObjectInputStream(s.getInputStream()); //get java object from the server.
 
 			os= new PrintWriter(s.getOutputStream());
 		}
@@ -53,13 +55,17 @@ public class Client implements Runnable
 			{
 				os.println(line);
 				os.flush();
-				response = input.readObject();
+				response = input.readObject(); //reads object
 
 				HashMap<String, byte[]> yourMap = new HashMap<String, byte[]>();
 
 				if(response instanceof HashMap){
 					yourMap = (HashMap<String, byte[]>)response;
 					System.out.println("Server Response : "+yourMap);
+				}else if(response instanceof byte[]){
+					printFile("ds.PNG", (byte[]) response);
+					System.out.println("File data received. ");
+					
 				}else{
 					System.out.println("Server Response : "+response);
 				}
@@ -88,5 +94,11 @@ public class Client implements Runnable
 			System.out.println("Connection Closed");
 		}
 
+	}
+	private void printFile(String fileName, byte[] data) throws IOException {
+		String path = "C:\\Users\\MehmetBerk\\Desktop\\out\\"+fileName;
+		FileOutputStream fos = new FileOutputStream(path);
+		fos.write(data);
+		fos.close();
 	}
 }

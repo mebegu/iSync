@@ -18,7 +18,7 @@ public class Server
 		this.sw = sw;
 		
 		fh = FileHandler.getInstance();
-		fh.setDirectory("C:\\Users\\MEHMETBERKGURCAY\\Desktop\\dir\\");
+		fh.setDirectory("C:\\Users\\MehmetBerk\\Desktop\\dr\\");
 		
 		try {
 			ss = new ServerSocket(port);
