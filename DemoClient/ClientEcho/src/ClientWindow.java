@@ -3,6 +3,8 @@
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -20,11 +22,19 @@ public class ClientWindow extends SWindow implements ActionListener {
 	private JTextArea text;
 	private Client client;
 	private UIButton btUI;
+	private JButton end;
 	
 	public ClientWindow (){
-		client = new Client(this, 4445);
+		
+		try {
+			client = new Client(this, InetAddress.getLocalHost().getHostAddress(),4445);
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		}
+		
 		prepareWindow();
 		setSize(600,400);
+		resetText();
 	}
 
 	private void prepareWindow() {
@@ -56,6 +66,12 @@ public class ClientWindow extends SWindow implements ActionListener {
 		syncFile.addActionListener(this);
 		getButtonPane().add(syncFile);
 		
+		end = new JButton("End session.");
+		end.setSize(50,50);
+		end.setUI(btUI);
+		end.addActionListener(this);
+		getButtonPane().add(end);
+		
 		
 		text = new JTextArea(20, 50);
 		text.setEditable ( false ); // set textArea non-editable
@@ -71,21 +87,26 @@ public class ClientWindow extends SWindow implements ActionListener {
 	public void actionPerformed(ActionEvent arg0) {
 		Object src = arg0.getSource();
 		if(src == syncCheck){
-			System.out.println("Sync check is pressed.");
+			resetText();
+			client.syncCheck();
 		}else if(src == syncAll){
-			System.out.println("Sync all is pressed.");
+			resetText();
+			client.syncAll();
 		}else if(src == syncFile){
-			System.out.println("The file "+ files.getSelectedItem()+" is selected to sync.");
+			resetText();
+			client.syncFile(files.getSelectedItem().toString());
+		}else if(src == end){
+			client.end();
 		}
 		
 	}
 	
-	public void write(String[] s){
-		String areaText = "";
-		for(int i=0; i<s.length; i++){
-			areaText += (s[i]+"\n");
-		}
-		text.setText(areaText);
+	public void write(String s){
+		text.setText(text.getText()+s+"\n");
+	}
+	
+	public void resetText(){
+		text.setText(client.toString()+"\n");
 	}
 	
 	

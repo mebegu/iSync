@@ -130,10 +130,5 @@ public class SWindow extends JFrame{
 		item.addActionListener(listener);
 		file.add(item,0);
 	}
-	
-	
-	
-
-
 
 }

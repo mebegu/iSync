@@ -1,7 +1,6 @@
 // A simple Client Server Protocol .. Client for Echo Server
 
 import java.io.BufferedReader;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
@@ -12,107 +11,110 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 
-public class Client implements Runnable
+public class Client
 {
+	private Socket cmdSocket=null;
+	private ServerSocket dataServer = null;
+	private ClientWindow cw;
+	private final int clientPort = 4446;
+	private int serverPort;
+	private InetAddress serverAddress;
+	private FileHandler fh;
+	private BufferedReader cmdLnReader;
+	private BufferedReader cmdIn;
+	private PrintWriter cmdOut;
+	
 
-	public Client(){}
-	public Client(ClientWindow serverWindow, int i) {
-		// TODO Auto-generated constructor stub
-	}
-	@SuppressWarnings("unchecked")
-	@Override
-	public void run() {
-		InetAddress address = null;
+	public Client(ClientWindow clientWindow, String sAddress, int port) {
+		cw = clientWindow;
+		serverPort = port;
 		try {
-			address = InetAddress.getLocalHost();
-		} catch (UnknownHostException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		Socket cmdSocket=null;
-		ServerSocket dataServer = null;
-		String line=null;
-		BufferedReader cmdLnReader=null;
-		PrintWriter cmdOut=null;
-		BufferedReader cmdIn = null;
-		try
-		{
-			dataServer = new ServerSocket(4446);
-			cmdSocket =new Socket(address, 4445); // You can use static final constant PORT_NUM
-			cmdLnReader= new BufferedReader(new InputStreamReader(System.in));
-			cmdIn = new BufferedReader(new InputStreamReader(cmdSocket.getInputStream())); 
-			cmdOut= new PrintWriter(cmdSocket.getOutputStream());
-			
-		}
-		catch (IOException e)
-		{
+			serverAddress = InetAddress.getByName(sAddress);
+		} catch (UnknownHostException e) {
 			e.printStackTrace();
-			System.err.print("IO Exception");
 		}
-
-		System.out.println("Client Address : "+address);
-		System.out.println("Enter Data to echo Server ( Enter QUIT to end):");
-
-		String response=null;
-		try
-		{
-			line=cmdLnReader.readLine(); 
-			while(line.compareTo("END")!=0)
-			{
-				cmdOut.println(line);
-				cmdOut.flush();
-				response = cmdIn.readLine(); //reads object
-				
-				if(verifyResponse(response)){
-					Socket dataInSocket = dataServer.accept();
-					ObjectInputStream dataInStream = new ObjectInputStream(dataInSocket.getInputStream());
-					Object data = dataInStream.readObject();
-					
-					if(data instanceof HashMap){
-						HashMap<String, byte[]> yourMap = new HashMap<String, byte[]>();
-						yourMap = (HashMap<String, byte[]>)data;
-						System.out.println("Server Response : "+yourMap);
-					}else if(data instanceof byte[]){
-						printFile("ds.PNG", (byte[]) data);
-						System.out.println("File data received. ");
-						
-					}else{
-						if(data instanceof String)
-							System.out.println("Server Response : "+data);
-						else
-							System.out.println("Server Response : "+response);
-					}
-				}else{
-					System.out.println("Server Response : "+response);
-				}
-
-				line=cmdLnReader.readLine();
-			}
-
-
-
-		}
-		catch(IOException | ClassNotFoundException e)
-		{
-			e.printStackTrace();
-			System.out.println("Socket read Error");
-		}
-		finally
-		{
-			try {
-				cmdIn.close();
-				cmdOut.close();
-				cmdSocket.close();
-				cmdLnReader.close();
-				dataServer.close();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			System.out.println("Connection Closed");
-		}
-
+		fh = FileHandler.getInstance();
+		fh.setDirectory("C:\\Users\\MehmetBerk\\Desktop\\out\\");
+		initialize();
 	}
+	
+	public void syncCheck(){
+		cw.write("Sync check is pressed.");
+	}
+	
+	public void syncAll(){
+		cw.write("Sync all is pressed.");
+	}
+	
+	public void syncFile(String fileName){
+		cw.write("The file "+ fileName+" is selected to sync.");
+	}
+	
+	public void end(){
+		cw.write("Session is ended.");
+	}
+	
+	
+	
+	@SuppressWarnings("unchecked")
+	private HashMap<String, byte[]> getHashes(String op, String filename) throws IOException, ClassNotFoundException{
+		cmdOut.println("GETHASH");
+		cmdOut.flush();
+		String response = cmdIn.readLine();
+		
+		if(verifyResponse(response)){
+			Socket dataInSocket = dataServer.accept();
+			ObjectInputStream dataInStream = new ObjectInputStream(dataInSocket.getInputStream());
+			Object data = dataInStream.readObject();
+			
+			if(data instanceof HashMap){
+				HashMap<String, byte[]> serverHashes = new HashMap<String, byte[]>();
+				serverHashes = (HashMap<String, byte[]>)data;
+				cw.write("Server Response : "+serverHashes);
+				return serverHashes;
+			}else{
+				cw.write("Server Response : "+response);
+				return null;
+			}
+			
+		}else{
+			cw.write("Server Response : "+response);
+			return null;
+		}
+
+		
+	}
+	
+	private void getAndSaveFile(String fName) throws IOException, ClassNotFoundException{
+		cmdOut.println("GETFILE "+fName);
+		cmdOut.flush();
+		String response = cmdIn.readLine();
+		
+		if(verifyResponse(response)){
+			Socket dataInSocket = dataServer.accept();
+			ObjectInputStream dataInStream = new ObjectInputStream(dataInSocket.getInputStream());
+			Object data = dataInStream.readObject();
+			if(data instanceof byte[]){
+				fh.printFile(fName, (byte[]) data);
+				cw.write("File data received. ");
+				
+			}else{
+				if(data instanceof String)
+					cw.write("Server Response : "+data);
+				else
+					cw.write("Server Response : "+response);
+			}
+			
+			
+		}else{
+			cw.write("Server Response : "+response);
+		}
+		
+		
+			
+		
+	}
+	
 	private boolean verifyResponse(String response) {
 		if(response.startsWith("200"))
 			return true;
@@ -120,10 +122,51 @@ public class Client implements Runnable
 			return false;
 	}
 	
-	private void printFile(String fileName, byte[] data) throws IOException {
-		String path = "C:\\Users\\MehmetBerk\\Desktop\\out\\"+fileName;
-		FileOutputStream fos = new FileOutputStream(path);
-		fos.write(data);
-		fos.close();
+	private void initialize(){
+		try
+		{
+			dataServer = new ServerSocket(clientPort);
+			cmdSocket =new Socket(serverAddress, serverPort); // You can use static final constant PORT_NUM
+			cmdLnReader= new BufferedReader(new InputStreamReader(System.in));
+			cmdIn = new BufferedReader(new InputStreamReader(cmdSocket.getInputStream())); 
+			cmdOut= new PrintWriter(cmdSocket.getOutputStream());
+			cw.write("Connection established with sever: "+serverAddress);
+			cw.write("Enter Data to echo Server :");
+			
+			
+		}catch (IOException e){
+			e.printStackTrace();
+		}
 	}
+	
+	private void close() {
+		try {
+			cmdIn.close();
+			cmdOut.close();
+			cmdSocket.close();
+			cmdLnReader.close();
+			dataServer.close();
+			cw.write("Connection Closed");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+	}
+
+	@Override
+	public String toString() {
+		try {
+			return "Local [address / port]: " + InetAddress.getLocalHost().getHostAddress() +" / "+clientPort 
+					+ "\nServer  [address / port]: "+ serverAddress.getHostAddress()+" / "+serverPort; 
+
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	
+
 }
