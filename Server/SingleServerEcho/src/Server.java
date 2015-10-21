@@ -7,24 +7,20 @@ import java.net.Socket;
 
 public class Server
 {
-	private Socket s = null;
-	private ServerSocket ss=null;
+	private int port;
+	private ServerSocket cmdServer=null;
 	private ServerWindow sw;
 	private boolean status;
-	private FileHandler fh = null;
+	private FileHandler fileHandler = null;
+	private Socket cmdSocket = null;
 
 	public Server(ServerWindow sw, int port){
 		status=false;
 		this.sw = sw;
+		this.port = port;
+		fileHandler = FileHandler.getInstance();
+		fileHandler.setDirectory("C:\\Users\\MehmetBerk\\Desktop\\dr\\");
 		
-		fh = FileHandler.getInstance();
-		fh.setDirectory("C:\\Users\\MehmetBerk\\Desktop\\dr\\");
-		
-		try {
-			ss = new ServerSocket(port);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 
 	}
 
@@ -40,19 +36,25 @@ public class Server
 	public void activate(){
 		status = true;
 		
+		try {
+			cmdServer = new ServerSocket(port);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
 		new Thread(new Runnable() {
 			public void run() {
 
 				while(status){
 					try{
-						sw.write("Listening");
-						s= ss.accept();
-						sw.write("Connection Established: "+s);
-
-						new Thread(new RequestHandler(getInstance(), s)).start();
+						sw.write("Listening...");
+						cmdSocket= cmdServer.accept();
+						sw.write("Connection Established: "+cmdSocket);
+						
+						new Thread(new RequestHandler(getInstance(), cmdSocket)).start();
 
 					}catch(IOException e){
-						e.printStackTrace();
+						System.err.println(e.getLocalizedMessage());
 					}
 				}
 			}
@@ -65,10 +67,16 @@ public class Server
 	}
 	
 	public void shutdown(){
+		
 		status = false;
 		try {
-			if (s!=null)
-				s.close();
+			if(cmdServer!=null)
+				cmdServer.close();
+			if(cmdSocket!=null)
+				cmdSocket.close();
+			
+			sw.write("Server is Closed.");
+			
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
