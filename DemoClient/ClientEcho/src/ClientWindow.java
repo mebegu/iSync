@@ -7,9 +7,9 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
 
 @SuppressWarnings("serial")
@@ -18,7 +18,7 @@ public class ClientWindow extends SWindow implements ActionListener {
 	private JButton syncCheck;
 	private JButton syncAll;
 	private JButton syncFile;
-	private JComboBox<String> files;
+	private JTextField file;
 	private JTextArea text;
 	private Client client;
 	private UIButton btUI;
@@ -26,14 +26,15 @@ public class ClientWindow extends SWindow implements ActionListener {
 	
 	public ClientWindow (){
 		
+		prepareWindow();
+		setSize(600,400);
+		
 		try {
-			client = new Client(this, InetAddress.getLocalHost().getHostAddress(),4445);
+			client = new Client(this, InetAddress.getLocalHost().getHostAddress());
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}
 		
-		prepareWindow();
-		setSize(600,400);
 		resetText();
 	}
 
@@ -52,12 +53,10 @@ public class ClientWindow extends SWindow implements ActionListener {
 		syncAll.addActionListener(this);
 		getButtonPane().add(syncAll);
 		
-		files = new JComboBox<String>();
-		files.setSize(50,50);
-		files.setBackground(Color.WHITE);
-		files.insertItemAt("example.png", 0);
-		files.insertItemAt("hw.pdf", 1);
-		getButtonPane().add(files);
+		file = new JTextField();
+		file.setColumns(10);
+		file.setBackground(Color.WHITE);
+		getButtonPane().add(file);
 		
 		
 		syncFile = new JButton("Sync File");
@@ -87,14 +86,11 @@ public class ClientWindow extends SWindow implements ActionListener {
 	public void actionPerformed(ActionEvent arg0) {
 		Object src = arg0.getSource();
 		if(src == syncCheck){
-			resetText();
 			client.syncCheck();
 		}else if(src == syncAll){
-			resetText();
 			client.syncAll();
 		}else if(src == syncFile){
-			resetText();
-			client.syncFile(files.getSelectedItem().toString());
+			client.syncFile(file.getText());
 		}else if(src == end){
 			client.end();
 		}

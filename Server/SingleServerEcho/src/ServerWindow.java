@@ -18,7 +18,7 @@ public class ServerWindow extends SWindow implements ActionListener {
 	private UIButton btUI;
 	
 	public ServerWindow (){
-		server = new Server(this, 4445);
+		server = new Server(this);
 		prepareWindow();
 		setSize(600,400);
 	}

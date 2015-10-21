@@ -6,9 +6,11 @@ import java.io.PrintWriter;
 import java.net.Socket;
 
 public class RequestHandler implements Runnable {
+	
+	private final static int clientPort = 4446;
+	
 	private Server server;
 	private Socket s;
-	private final static int clientPort = 4446;
 
 	public RequestHandler(Server server, Socket socket){
 		this.server = server;

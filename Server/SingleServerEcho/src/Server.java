@@ -7,19 +7,20 @@ import java.net.Socket;
 
 public class Server
 {
-	private int port;
+	private final static int port = 4445;
+	private final static String dir = "C:\\Users\\MEHMETBERKGURCAY\\Desktop\\server\\";
+	
 	private ServerSocket cmdServer=null;
 	private ServerWindow sw;
 	private boolean status;
 	private FileHandler fileHandler = null;
 	private Socket cmdSocket = null;
 
-	public Server(ServerWindow sw, int port){
+	public Server(ServerWindow sw){
 		status=false;
 		this.sw = sw;
-		this.port = port;
 		fileHandler = FileHandler.getInstance();
-		fileHandler.setDirectory("C:\\Users\\MehmetBerk\\Desktop\\dr\\");
+		fileHandler.setDirectory(dir);
 		
 
 	}
